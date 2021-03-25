@@ -76,7 +76,7 @@
 
 /datum/action/innate/cult/mastervote/IsAvailable()
 	var/datum/antagonist/cult/C = owner.mind.has_antag_datum(/datum/antagonist/cult,TRUE)
-	if(!C || C.cult_team.cult_vote_called || !ishuman(owner))
+	if(!C?.cult_team || C.cult_team.cult_vote_called || !ishuman(owner)) //tegu edit
 		return FALSE
 	return ..()
 
@@ -84,6 +84,9 @@
 	var/choice = alert(owner, "The mantle of leadership is heavy. Success in this role requires an expert level of communication and experience. Are you sure?",, "Yes", "No")
 	if(choice == "Yes" && IsAvailable())
 		var/datum/antagonist/cult/C = owner.mind.has_antag_datum(/datum/antagonist/cult,TRUE)
+		if(!C.cult_team)//tegu edit start
+			to_chat(owner, "<span class='cult bold'>Do you not already lead yourself?</span>")
+			return //tegu edit end
 		pollCultists(owner,C.cult_team)
 
 /proc/pollCultists(mob/living/Nominee,datum/team/cult/team) //Cult Master Poll
@@ -153,6 +156,9 @@
 	var/datum/antagonist/cult/antag = owner.mind.has_antag_datum(/datum/antagonist/cult,TRUE)
 	if(!antag)
 		return
+	if(!antag.cult_team)//tegu edit start
+		to_chat(owner, "<span class='cult bold'>You have no team. You are alone.</span>")
+		return//tegu edit end
 	var/place = get_area(owner)
 	var/datum/objective/eldergod/summon_objective = locate() in antag.cult_team.objectives
 	if(place in summon_objective.summon_spots)//cant do final reckoning in the summon area to prevent abuse, you'll need to get everyone to stand on the circle!
@@ -268,7 +274,6 @@
 		return FALSE
 
 	var/datum/antagonist/cult/C = caller.mind.has_antag_datum(/datum/antagonist/cult,TRUE)
-
 	if(target in view(7, get_turf(ranged_ability_user)))
 		if(C.cult_team.blood_target)
 			to_chat(ranged_ability_user, "<span class='cult'>The cult has already designated a target!</span>")
@@ -337,8 +342,11 @@
 
 /datum/action/innate/cult/ghostmark/Activate()
 	var/datum/antagonist/cult/C = owner.mind.has_antag_datum(/datum/antagonist/cult,TRUE)
+	if(!C.cult_team)//Tegu edit start
+		to_chat(owner, "<span class='cultbold'>You are alone. You do not have a team.</span>")
+		return//tegu edit end
 	if(C.cult_team.blood_target)
-		if(cooldown>world.time)
+		if(cooldown > world.time) //Tegu edit
 			reset_blood_target(C.cult_team)
 			to_chat(owner, "<span class='cultbold'>You have cleared the cult's blood target!</span>")
 			deltimer(C.cult_team.blood_target_reset_timer)
@@ -346,7 +354,7 @@
 		else
 			to_chat(owner, "<span class='cultbold'>The cult has already designated a target!</span>")
 			return
-	if(cooldown>world.time)
+	if(cooldown > world.time) //Tegu edit
 		to_chat(owner, "<span class='cultbold'>You aren't ready to place another blood mark yet!</span>")
 		return
 	target = owner.orbiting?.parent || get_turf(owner)
